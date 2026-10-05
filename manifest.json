@@ -1,6 +1,6 @@
 {
-  "name": "Minha pílula",
-  "short_name": "Pílula",
+  "name": "Todo Dia",
+  "short_name": "Todo Dia",
   "description": "Controle do anticoncepcional: ciclo de 21 dias com pausa de 7.",
   "lang": "pt-BR",
   "start_url": "./",

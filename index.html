@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Pílula</title>
+<title>Todo Dia</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Pílula">
+<meta name="apple-mobile-web-app-title" content="Todo Dia">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#d6336c">
 <style>
@@ -121,7 +121,7 @@ details[open] summary::after{content:"－"}
 
     var today = todayDate();
     var info = cycleInfo(today);
-    var html = '<h1>Minha pílula</h1>';
+    var html = '<h1>Todo Dia</h1>';
 
     if (info.before) {
       html += '<section class="card hero"><div class="label">Cartela ainda não começou</div>' +
@@ -266,7 +266,7 @@ details[open] summary::after{content:"－"}
 
   function setupHTML(){
     var t = ymd(todayDate());
-    return '<h1>Minha pílula</h1><section class="card">' +
+    return '<h1>Todo Dia</h1><section class="card">' +
       '<strong>Vamos configurar</strong>' +
       '<p class="note">Esquema: 21 dias de pílula e 7 de pausa. Seus dados ficam só neste aparelho.</p>' +
       '<label for="f-start">Em que dia você tomou (ou vai tomar) a 1ª pílula da cartela atual?</label>' +
@@ -295,8 +295,8 @@ details[open] summary::after{content:"－"}
     var cs = parse(S.start);
     var n = diffDays(cs, today);
     if (n > 0) cs = addDays(today, -(((n % CYCLE)+CYCLE)%CYCLE));
-    var L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Pilula App//PT','CALSCALE:GREGORIAN',
-             'X-WR-CALNAME:Pílula'];
+    var L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Todo Dia//PT','CALSCALE:GREGORIAN',
+             'X-WR-CALNAME:Todo Dia'];
     var stamp = dt(new Date(), nowHM());
     function ev(uid, startLine, title, alarms){
       L.push('BEGIN:VEVENT','UID:'+uid+'@pilula-app','DTSTAMP:'+stamp,startLine,'SUMMARY:'+title);
