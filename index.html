@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pílula</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pílula">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#d6336c">
+<style>
+:root{
+  --bg:#fff7f9; --card:#ffffff; --ink:#2b1d22; --muted:#7a6a70;
+  --rose:#d6336c; --rose-soft:#fde3ec; --rose-ink:#9c1f4d;
+  --pause:#ece8ea; --pause-ink:#6b5f64; --ok:#2f9e6b; --warn:#e8590c;
+  --line:#f0dde4;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1b1215; --card:#261a1f; --ink:#f6eaee; --muted:#b9a5ad;
+    --rose:#f06595; --rose-soft:#3d1f2b; --rose-ink:#ffc2d6;
+    --pause:#332a2e; --pause-ink:#c9b9c0; --ok:#51cf9b; --warn:#ff922b;
+    --line:#3a2a31;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+main{max-width:480px;margin:0 auto;display:grid;gap:14px}
+h1{font-size:1.15rem;margin:4px 0 0;color:var(--rose-ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.hero .label{font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.hero .big{font-size:1.7rem;font-weight:700;margin:2px 0 4px}
+.hero .sub{color:var(--muted);margin:0 0 14px}
+.btn{appearance:none;border:0;border-radius:14px;padding:14px 18px;font:inherit;font-weight:700;
+  background:var(--rose);color:#fff;width:100%;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--rose-ink);border:1px solid var(--line);font-weight:600}
+.btn.small{width:auto;padding:8px 14px;font-size:.9rem}
+.btn:active{transform:scale(.99)}
+.taken{display:flex;align-items:center;gap:10px;color:var(--ok);font-weight:700}
+.banner{border-radius:14px;padding:12px 14px;background:var(--rose-soft);color:var(--rose-ink);font-weight:600}
+.banner.warn{background:#fff0e6;color:#a8400a}
+@media (prefers-color-scheme: dark){.banner.warn{background:#3b2414;color:#ffb27a}}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
+.cell{aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:.82rem;font-weight:600;border:2px solid transparent;position:relative;user-select:none}
+.cell.pill{background:var(--rose-soft);color:var(--rose-ink)}
+.cell.pause{background:var(--pause);color:var(--pause-ink)}
+.cell.done{background:var(--rose);color:#fff}
+.cell.missed{border-color:var(--warn)}
+.cell.today{border-color:var(--ink)}
+.cell .mark{font-size:.7rem;line-height:1;height:.8rem}
+.cell.tap{cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:4px;margin-right:5px;vertical-align:-1px}
+.stat{display:flex;justify-content:space-between;color:var(--muted);font-size:.92rem;margin-top:12px}
+label{display:block;font-weight:600;margin:12px 0 4px}
+input[type=date],input[type=time],input[type=number]{width:100%;padding:12px;border-radius:12px;
+  border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+details summary{cursor:pointer;font-weight:700;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"＋";float:right;color:var(--muted)}
+details[open] summary::after{content:"－"}
+.note{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.stack{display:grid;gap:10px;margin-top:12px}
+.danger{color:#c92a2a;border-color:#f3c9c9}
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<script>
+(function(){
+  var KEY = 'pilula.v1';
+  var S = load();
+
+  function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; } }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function ymd(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function parse(s){ var p=s.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); }
+  function addDays(d,n){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n); }
+  function diffDays(a,b){
+    return Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate()) -
+                       Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000);
+  }
+  function todayDate(){ var n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); }
+  function nowHM(){ var n=new Date(); return pad(n.getHours())+':'+pad(n.getMinutes()); }
+  function fmtLong(d){ return d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}); }
+  function fmtShort(d){ return pad(d.getDate())+'/'+pad(d.getMonth()+1); }
+  function minutes(hm){ var p=hm.split(':').map(Number); return p[0]*60+p[1]; }
+
+  var PILLS = 21, PAUSE = 7, CYCLE = 28;
+
+  function cycleInfo(date){
+    var n = diffDays(parse(S.start), date);
+    if (n < 0) return {before:true, daysTo:-n};
+    var pos = ((n % CYCLE) + CYCLE) % CYCLE;
+    var day = pos + 1;
+    var cycleStart = addDays(date, -pos);
+    return {
+      before:false, pos:pos, day:day, isPill: day <= PILLS,
+      cycleStart:cycleStart, nextStart:addDays(cycleStart, CYCLE),
+      pauseDay: day - PILLS
+    };
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  function render(){
+    var app = document.getElementById('app');
+    if (!S.start) { app.innerHTML = setupHTML(); bindSetup(); return; }
+    if (!S.time) S.time = '21:00';
+    if (S.warn == null) S.warn = 5;
+    S.log = S.log || {};
+
+    var today = todayDate();
+    var info = cycleInfo(today);
+    var html = '<h1>Minha pílula</h1>';
+
+    if (info.before) {
+      html += '<section class="card hero"><div class="label">Cartela ainda não começou</div>' +
+        '<div class="big">Começa em '+info.daysTo+(info.daysTo===1?' dia':' dias')+'</div>' +
+        '<p class="sub">Primeira pílula em '+esc(fmtLong(parse(S.start)))+', às '+esc(S.time)+'.</p></section>';
+      html += settingsHTML();
+      app.innerHTML = html; bindSettings(); return;
+    }
+
+    var key = ymd(today);
+    var took = S.log[key];
+    var late = minutes(nowHM()) >= minutes(S.time);
+
+    if (info.isPill) {
+      html += '<section class="card hero">';
+      html += '<div class="label">Dia '+info.day+' de '+PILLS+'</div>';
+      if (took) {
+        html += '<div class="big taken">✓ Tomada hoje</div>' +
+                '<p class="sub">Registrada às '+esc(took.t)+'.</p>' +
+                '<button class="btn ghost" id="undo">Desfazer</button>';
+      } else {
+        html += '<div class="big">Hoje às '+esc(S.time)+'</div>';
+        if (late) {
+          html += '<div class="banner" style="margin-bottom:12px">Já passou do horário. Você tomou?</div>';
+        } else {
+          html += '<p class="sub">Toque no botão quando tomar.</p>';
+        }
+        html += '<button class="btn" id="took">Tomei</button>';
+      }
+      html += '</section>';
+
+      var left = PILLS - info.day;
+      if (left <= S.warn) {
+        var msg = left === 0 ? 'Hoje é a última pílula da cartela. Separe a próxima.'
+                : 'Sua cartela acaba em '+left+(left===1?' dia':' dias')+'. Separe a próxima.';
+        html += '<div class="banner warn">'+msg+'</div>';
+      }
+    } else {
+      var daysToNext = diffDays(today, info.nextStart);
+      html += '<section class="card hero">';
+      html += '<div class="label">Pausa · dia '+info.pauseDay+' de '+PAUSE+'</div>';
+      html += '<div class="big">Sem pílula hoje</div>';
+      html += '<p class="sub" style="margin:0">' +
+        (daysToNext===1 ? 'Amanhã você começa a nova cartela ('+esc(fmtLong(info.nextStart))+').'
+                        : 'Nova cartela começa em '+daysToNext+' dias, '+esc(fmtLong(info.nextStart))+'.') +
+        '</p></section>';
+    }
+
+    html += gridHTML(info, today);
+    html += '<details class="card"><summary>Esqueci de tomar</summary>' +
+      '<p class="note">O que fazer depende do seu remédio e de quantas horas ou pílulas passaram. ' +
+      'Confira a bula ou pergunte ao seu ginecologista ou farmacêutico. ' +
+      'Depois, toque no dia no calendário acima para registrar o que aconteceu.</p></details>';
+    html += settingsHTML();
+
+    app.innerHTML = html;
+    var b = document.getElementById('took');
+    if (b) b.onclick = function(){ S.log[key] = {t:nowHM()}; save(); render(); };
+    var u = document.getElementById('undo');
+    if (u) u.onclick = function(){ delete S.log[key]; save(); render(); };
+    bindGrid(today);
+    bindSettings();
+  }
+
+  function gridHTML(info, today){
+    var cells = '', taken = 0, expected = 0;
+    for (var i=0;i<CYCLE;i++){
+      var d = addDays(info.cycleStart, i);
+      var k = ymd(d);
+      var isPill = i < PILLS;
+      var past = diffDays(d, today) >= 0;
+      var afterStart = diffDays(parse(S.start), d) >= 0;
+      var done = isPill && S.log[k];
+      var isToday = diffDays(d, today) === 0;
+      var missed = isPill && afterStart && !done && (diffDays(d, today) > 0);
+      if (isPill && past && afterStart) { expected++; if (done) taken++; }
+      var cls = 'cell ' + (isPill ? 'pill' : 'pause');
+      if (done) cls += ' done';
+      if (missed) cls += ' missed';
+      if (isToday) cls += ' today';
+      var tappable = isPill && past && afterStart;
+      if (tappable) cls += ' tap';
+      cells += '<div class="'+cls+'" '+(tappable?'data-date="'+k+'"':'')+' title="'+esc(fmtLong(d))+'">' +
+               '<span>'+d.getDate()+'</span><span class="mark">'+(done?'✓':(missed?'!':''))+'</span></div>';
+    }
+    return '<section class="card"><strong>Esta cartela</strong>' +
+      '<div class="grid">'+cells+'</div>' +
+      '<div class="legend"><span><i style="background:var(--rose)"></i>Tomada</span>' +
+      '<span><i style="background:var(--rose-soft)"></i>Pílula</span>' +
+      '<span><i style="background:var(--pause)"></i>Pausa</span>' +
+      '<span><i style="border:2px solid var(--warn)"></i>Sem registro</span></div>' +
+      '<div class="stat"><span>Registradas até hoje</span><strong>'+taken+' de '+expected+'</strong></div>' +
+      '<p class="note">Toque num dia que já passou para marcar ou desmarcar.</p></section>';
+  }
+
+  function bindGrid(){
+    var els = document.querySelectorAll('.cell[data-date]');
+    for (var i=0;i<els.length;i++){
+      els[i].onclick = function(){
+        var k = this.getAttribute('data-date');
+        if (S.log[k]) delete S.log[k]; else S.log[k] = {t:'--:--'};
+        save(); render();
+      };
+    }
+  }
+
+  function settingsHTML(){
+    return '<details class="card" id="cfg"><summary>Ajustes e lembretes</summary>' +
+      '<label for="s-start">Dia da 1ª pílula da cartela atual</label>' +
+      '<input type="date" id="s-start" value="'+esc(S.start)+'">' +
+      '<label for="s-time">Horário da pílula</label>' +
+      '<input type="time" id="s-time" value="'+esc(S.time||'21:00')+'">' +
+      '<label for="s-warn">Avisar quando faltarem quantos dias para acabar</label>' +
+      '<input type="number" id="s-warn" min="1" max="10" value="'+esc(S.warn==null?5:S.warn)+'">' +
+      '<div class="stack">' +
+      '<button class="btn" id="ics">Adicionar lembretes ao Calendário</button>' +
+      '<p class="note" style="margin:0">Cria alarmes diários para as próximas 6 cartelas (a pílula e uma segunda checagem 30 min depois), ' +
+      'avisos de fim de cartela e de início da próxima. Se mudar o horário ou a data, gere de novo.</p>' +
+      '<button class="btn ghost danger" id="wipe">Apagar todos os dados</button>' +
+      '</div></details>';
+  }
+
+  function bindSettings(){
+    var st = document.getElementById('s-start'), tm = document.getElementById('s-time'),
+        wn = document.getElementById('s-warn');
+    if (!st) return;
+    st.onchange = function(){ if (st.value){ S.start = st.value; save(); render(); openCfg(); } };
+    tm.onchange = function(){ if (tm.value){ S.time = tm.value; save(); render(); openCfg(); } };
+    wn.onchange = function(){
+      var v = parseInt(wn.value,10);
+      if (v>=1 && v<=10){ S.warn = v; save(); render(); openCfg(); }
+    };
+    document.getElementById('ics').onclick = downloadICS;
+    document.getElementById('wipe').onclick = function(){
+      if (confirm('Apagar todos os dados deste app neste aparelho?')) {
+        try { localStorage.removeItem(KEY); } catch(e){}
+        S = {}; render();
+      }
+    };
+  }
+  function openCfg(){ var c=document.getElementById('cfg'); if (c) c.open = true; }
+
+  function setupHTML(){
+    var t = ymd(todayDate());
+    return '<h1>Minha pílula</h1><section class="card">' +
+      '<strong>Vamos configurar</strong>' +
+      '<p class="note">Esquema: 21 dias de pílula e 7 de pausa. Seus dados ficam só neste aparelho.</p>' +
+      '<label for="f-start">Em que dia você tomou (ou vai tomar) a 1ª pílula da cartela atual?</label>' +
+      '<input type="date" id="f-start" value="'+t+'">' +
+      '<label for="f-time">Que horas você toma?</label>' +
+      '<input type="time" id="f-time" value="21:00">' +
+      '<div class="stack"><button class="btn" id="f-go">Começar</button></div></section>';
+  }
+  function bindSetup(){
+    document.getElementById('f-go').onclick = function(){
+      var s = document.getElementById('f-start').value, t = document.getElementById('f-time').value;
+      if (!s || !t){ alert('Preencha a data e o horário.'); return; }
+      S = {start:s, time:t, warn:5, log:{}}; save(); render();
+    };
+  }
+
+  // ---------- Calendário (.ics) ----------
+  function dt(d, hm){
+    var p = hm.split(':');
+    return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+p[0]+p[1]+'00';
+  }
+  function dd(d){ return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate()); }
+
+  function buildICS(){
+    var today = todayDate();
+    var cs = parse(S.start);
+    var n = diffDays(cs, today);
+    if (n > 0) cs = addDays(today, -(((n % CYCLE)+CYCLE)%CYCLE));
+    var L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Pilula App//PT','CALSCALE:GREGORIAN',
+             'X-WR-CALNAME:Pílula'];
+    var stamp = dt(new Date(), nowHM());
+    function ev(uid, startLine, title, alarms){
+      L.push('BEGIN:VEVENT','UID:'+uid+'@pilula-app','DTSTAMP:'+stamp,startLine,'SUMMARY:'+title);
+      for (var i=0;i<alarms.length;i++){
+        L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+alarms[i].text,'TRIGGER:'+alarms[i].trig,'END:VALARM');
+      }
+      L.push('END:VEVENT');
+    }
+    for (var c=0;c<6;c++){
+      for (var i=0;i<CYCLE;i++){
+        var d = addDays(cs, c*CYCLE+i);
+        if (diffDays(today, d) < 0) continue;
+        var day = i+1, left = PILLS - day;
+        if (day <= PILLS){
+          ev('pill-'+dd(d), 'DTSTART:'+dt(d,S.time)+'\r\nDURATION:PT5M',
+             'Pílula (dia '+day+' de '+PILLS+')',
+             [{text:'Hora da pílula',trig:'PT0S'},{text:'Você já tomou a pílula?',trig:'PT30M'}]);
+        }
+        if (day <= PILLS && left === S.warn){
+          ev('end-'+dd(d), 'DTSTART;VALUE=DATE:'+dd(d), 'Cartela acabando: faltam '+left+' dias',
+             [{text:'Separe a próxima cartela',trig:'PT9H'}]);
+        }
+        if (day === PILLS+1){
+          ev('pause-'+dd(d), 'DTSTART;VALUE=DATE:'+dd(d), 'Pausa começa hoje (sem pílula)',
+             [{text:'Sem pílula por 7 dias',trig:'PT9H'}]);
+        }
+        if (day === 1 && c > 0){
+          ev('new-'+dd(d), 'DTSTART;VALUE=DATE:'+dd(d), 'Começa a nova cartela hoje',
+             [{text:'Primeira pílula da nova cartela',trig:'PT9H'}]);
+        }
+      }
+    }
+    L.push('END:VCALENDAR');
+    return L.join('\r\n');
+  }
+
+  function downloadICS(){
+    var blob = new Blob([buildICS()], {type:'text/calendar;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'lembretes-pilula.ics';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
+
+  // expõe para testes locais, sem efeito no uso normal
+  window.__pilula = {cycleInfo:cycleInfo, buildICS:buildICS, setState:function(x){S=x;}};
+
+  render();
+  // atualiza o aviso de "já passou do horário" com o app aberto
+  setInterval(function(){
+    var a = document.activeElement;
+    if (a && (a.tagName==='INPUT')) return;
+    var c = document.getElementById('cfg');
+    if (c && c.open) return;
+    render();
+  }, 60000);
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+})();
+</script>
+</body>
+</html>
