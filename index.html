@@ -10,44 +10,54 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Todo Dia">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#d6336c">
+<meta name="theme-color" content="#fff7f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1215" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
 <style>
 :root{
   --bg:#fff7f9; --card:#ffffff; --ink:#2b1d22; --muted:#7a6a70;
   --rose:#d6336c; --rose-soft:#fde3ec; --rose-ink:#9c1f4d;
   --pause:#ece8ea; --pause-ink:#6b5f64; --ok:#2f9e6b; --warn:#e8590c;
-  --line:#f0dde4;
+  --line:#f0dde4; --field:#fff7f9; --shadow:0 1px 2px rgba(156,31,77,.06),0 6px 20px rgba(156,31,77,.06);
 }
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#1b1215; --card:#261a1f; --ink:#f6eaee; --muted:#b9a5ad;
     --rose:#f06595; --rose-soft:#3d1f2b; --rose-ink:#ffc2d6;
     --pause:#332a2e; --pause-ink:#c9b9c0; --ok:#51cf9b; --warn:#ff922b;
-    --line:#3a2a31;
+    --line:#3a2a31; --field:#1f1519; --shadow:none;
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;background:var(--bg);color:var(--ink);
-  font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-body{padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
-main{max-width:480px;margin:0 auto;display:grid;gap:14px}
-h1{font-size:1.15rem;margin:4px 0 0;color:var(--rose-ink)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
-.hero .label{font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.hero .big{font-size:1.7rem;font-weight:700;margin:2px 0 4px}
-.hero .sub{color:var(--muted);margin:0 0 14px}
-.btn{appearance:none;border:0;border-radius:14px;padding:14px 18px;font:inherit;font-weight:700;
-  background:var(--rose);color:#fff;width:100%;cursor:pointer}
+  font:17px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{min-height:100vh;min-height:100dvh;overflow-x:hidden;
+  padding:calc(env(safe-area-inset-top) + 12px) max(16px,env(safe-area-inset-right))
+          calc(env(safe-area-inset-bottom) + 28px) max(16px,env(safe-area-inset-left))}
+main{max-width:480px;margin:0 auto;display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.top{display:flex;align-items:center;gap:10px;padding:4px 2px 2px}
+.top img{width:34px;height:34px;border-radius:9px}
+h1{font-size:1.35rem;line-height:1.2;margin:0;color:var(--rose-ink);letter-spacing:-.01em}
+h2{font-size:1.1rem;margin:0 0 4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px 18px;
+  box-shadow:var(--shadow);min-width:0}
+.hero .label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.hero .big{font-size:1.85rem;line-height:1.15;font-weight:750;margin:6px 0 6px;letter-spacing:-.01em}
+.hero .sub{color:var(--muted);margin:0 0 16px}
+.btn{appearance:none;-webkit-appearance:none;border:0;border-radius:14px;min-height:54px;padding:14px 18px;
+  font:inherit;font-weight:700;background:var(--rose);color:#fff;width:100%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;touch-action:manipulation}
 .btn.ghost{background:transparent;color:var(--rose-ink);border:1px solid var(--line);font-weight:600}
-.btn.small{width:auto;padding:8px 14px;font-size:.9rem}
-.btn:active{transform:scale(.99)}
+.btn.small{width:auto;min-height:40px;padding:8px 14px;font-size:.9rem}
+.btn:active{transform:scale(.985);opacity:.92}
 .taken{display:flex;align-items:center;gap:10px;color:var(--ok);font-weight:700}
 .banner{border-radius:14px;padding:12px 14px;background:var(--rose-soft);color:var(--rose-ink);font-weight:600}
 .banner.warn{background:#fff0e6;color:#a8400a}
 @media (prefers-color-scheme: dark){.banner.warn{background:#3b2414;color:#ffb27a}}
-.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:12px}
 .cell{aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  font-size:.82rem;font-weight:600;border:2px solid transparent;position:relative;user-select:none}
+  font-size:.85rem;font-weight:600;border:2px solid transparent;position:relative;user-select:none;-webkit-user-select:none;min-width:0}
 .cell.pill{background:var(--rose-soft);color:var(--rose-ink)}
 .cell.pause{background:var(--pause);color:var(--pause-ink)}
 .cell.done{background:var(--rose);color:#fff}
@@ -55,19 +65,35 @@ h1{font-size:1.15rem;margin:4px 0 0;color:var(--rose-ink)}
 .cell.today{border-color:var(--ink)}
 .cell .mark{font-size:.7rem;line-height:1;height:.8rem}
 .cell.tap{cursor:pointer}
-.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted);margin-top:10px}
+.cell.tap:active{transform:scale(.94)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:.8rem;color:var(--muted);margin-top:12px}
 .legend i{display:inline-block;width:11px;height:11px;border-radius:4px;margin-right:5px;vertical-align:-1px}
-.stat{display:flex;justify-content:space-between;color:var(--muted);font-size:.92rem;margin-top:12px}
-label{display:block;font-weight:600;margin:12px 0 4px}
-input[type=date],input[type=time],input[type=number]{width:100%;padding:12px;border-radius:12px;
-  border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
-details summary{cursor:pointer;font-weight:700;list-style:none}
+.stat{display:flex;justify-content:space-between;color:var(--muted);font-size:.92rem;margin-top:14px;
+  padding-top:12px;border-top:1px solid var(--line)}
+label{display:block;font-weight:600;margin:16px 0 6px;line-height:1.3}
+input[type=date],input[type=time],input[type=number]{
+  -webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;
+  height:52px;margin:0;padding:0 14px;border-radius:12px;border:1px solid var(--line);
+  background:var(--field);color:var(--ink);font:inherit;font-size:17px;text-align:left;line-height:52px}
+input::-webkit-date-and-time-value{text-align:left;margin:0}
+input::-webkit-datetime-edit{padding:0}
+input:focus{outline:none;border-color:var(--rose);box-shadow:0 0 0 3px var(--rose-soft)}
+details summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;
+  align-items:center;min-height:28px}
 details summary::-webkit-details-marker{display:none}
-details summary::after{content:"＋";float:right;color:var(--muted)}
+details summary::after{content:"＋";color:var(--muted);margin-left:12px}
 details[open] summary::after{content:"－"}
-.note{color:var(--muted);font-size:.88rem;margin:8px 0 0}
-.stack{display:grid;gap:10px;margin-top:12px}
+.note{color:var(--muted);font-size:.9rem;margin:8px 0 0}
+.stack{display:grid;gap:10px;margin-top:18px}
 .danger{color:#c92a2a;border-color:#f3c9c9}
+@media (prefers-color-scheme: dark){.danger{color:#ff8787;border-color:#5c2a2a}}
+.file{display:none}
+@media (max-width:360px){
+  .card{padding:16px 14px}
+  .grid{gap:4px}
+  .cell{border-radius:10px;font-size:.78rem}
+  .hero .big{font-size:1.6rem}
+}
 </style>
 </head>
 <body>
@@ -75,11 +101,60 @@ details[open] summary::after{content:"－"}
 
 <script>
 (function(){
-  var KEY = 'pilula.v1';
+  var KEY = 'pilula.v1', UIKEY = 'pilula.ui';
   var S = load();
+  var UI = loadUI();
 
   function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; } }
-  function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+  function save(){
+    S.saved = Date.now();
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+    idbPut(S);
+  }
+
+  // ---------- Cópia de segurança no IndexedDB ----------
+  // O localStorage pode ser apagado pelo sistema depois de um tempo sem uso.
+  // Guardamos uma segunda cópia no IndexedDB e recuperamos dela se precisar.
+  function idb(cb){
+    try {
+      var r = indexedDB.open('todo-dia', 1);
+      r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); };
+      r.onsuccess = function(){ cb(r.result); };
+      r.onerror = function(){ cb(null); };
+    } catch(e){ cb(null); }
+  }
+  function idbPut(v){
+    idb(function(db){
+      if (!db) return;
+      try { db.transaction('kv','readwrite').objectStore('kv').put(JSON.stringify(v), KEY); } catch(e){}
+    });
+  }
+  function idbGet(cb){
+    idb(function(db){
+      if (!db) return cb(null);
+      try {
+        var q = db.transaction('kv').objectStore('kv').get(KEY);
+        q.onsuccess = function(){ try { cb(JSON.parse(q.result)); } catch(e){ cb(null); } };
+        q.onerror = function(){ cb(null); };
+      } catch(e){ cb(null); }
+    });
+  }
+
+  // ---------- Onde a pessoa parou (seções abertas, rolagem, rascunho) ----------
+  function loadUI(){ try { return JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch(e){ return {}; } }
+  function saveUI(){ try { localStorage.setItem(UIKEY, JSON.stringify(UI)); } catch(e){} }
+  function captureUI(){
+    var open = [], ds = document.querySelectorAll('details[id]');
+    for (var i=0;i<ds.length;i++) if (ds[i].open) open.push(ds[i].id);
+    if (ds.length) UI.open = open;
+    UI.scroll = window.scrollY || 0;
+  }
+  function restoreUI(){
+    var open = UI.open || [];
+    for (var i=0;i<open.length;i++){ var d = document.getElementById(open[i]); if (d) d.open = true; }
+    var ds = document.querySelectorAll('details[id]');
+    for (var j=0;j<ds.length;j++) ds[j].addEventListener('toggle', function(){ captureUI(); saveUI(); });
+  }
 
   function pad(n){ return String(n).padStart(2,'0'); }
   function ymd(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -94,6 +169,8 @@ details[open] summary::after{content:"－"}
   function fmtLong(d){ return d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}); }
   function fmtShort(d){ return pad(d.getDate())+'/'+pad(d.getMonth()+1); }
   function minutes(hm){ var p=hm.split(':').map(Number); return p[0]*60+p[1]; }
+
+  var HEADER = '<header class="top"><img src="icon-180.png" alt=""><h1>Todo Dia</h1></header>';
 
   var PILLS = 21, PAUSE = 7, CYCLE = 28;
 
@@ -113,6 +190,12 @@ details[open] summary::after{content:"－"}
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
   function render(){
+    if (document.getElementById('app').firstChild) captureUI();
+    draw();
+    restoreUI();
+  }
+
+  function draw(){
     var app = document.getElementById('app');
     if (!S.start) { app.innerHTML = setupHTML(); bindSetup(); return; }
     if (!S.time) S.time = '21:00';
@@ -121,7 +204,7 @@ details[open] summary::after{content:"－"}
 
     var today = todayDate();
     var info = cycleInfo(today);
-    var html = '<h1>Todo Dia</h1>';
+    var html = HEADER;
 
     if (info.before) {
       html += '<section class="card hero"><div class="label">Cartela ainda não começou</div>' +
@@ -171,7 +254,7 @@ details[open] summary::after{content:"－"}
     }
 
     html += gridHTML(info, today);
-    html += '<details class="card"><summary>Esqueci de tomar</summary>' +
+    html += '<details class="card" id="forgot"><summary>Esqueci de tomar</summary>' +
       '<p class="note">O que fazer depende do seu remédio e de quantas horas ou pílulas passaram. ' +
       'Confira a bula ou pergunte ao seu ginecologista ou farmacêutico. ' +
       'Depois, toque no dia no calendário acima para registrar o que aconteceu.</p></details>';
@@ -240,6 +323,9 @@ details[open] summary::after{content:"－"}
       '<button class="btn" id="ics">Adicionar lembretes ao Calendário</button>' +
       '<p class="note" style="margin:0">Cria alarmes diários para as próximas 6 cartelas (a pílula e uma segunda checagem 30 min depois), ' +
       'avisos de fim de cartela e de início da próxima. Se mudar o horário ou a data, gere de novo.</p>' +
+      '<button class="btn ghost" id="bk-out">Salvar cópia de segurança</button>' +
+      '<button class="btn ghost" id="bk-in">Restaurar cópia de segurança</button>' +
+      '<input type="file" id="bk-file" class="file" accept=".json,application/json">' +
       '<button class="btn ghost danger" id="wipe">Apagar todos os dados</button>' +
       '</div></details>';
   }
@@ -255,31 +341,52 @@ details[open] summary::after{content:"－"}
       if (v>=1 && v<=10){ S.warn = v; save(); render(); openCfg(); }
     };
     document.getElementById('ics').onclick = downloadICS;
+    document.getElementById('bk-out').onclick = function(){
+      download(new Blob([JSON.stringify(S)], {type:'application/json'}), 'todo-dia-backup.json');
+    };
+    var file = document.getElementById('bk-file');
+    document.getElementById('bk-in').onclick = function(){ file.click(); };
+    file.onchange = function(){
+      var f = file.files && file.files[0]; if (!f) return;
+      var r = new FileReader();
+      r.onload = function(){
+        try {
+          var x = JSON.parse(r.result);
+          if (!x || !x.start) throw 0;
+          S = x; save(); render(); alert('Dados restaurados.');
+        } catch(e){ alert('Esse arquivo não é uma cópia do Todo Dia.'); }
+      };
+      r.readAsText(f);
+    };
     document.getElementById('wipe').onclick = function(){
       if (confirm('Apagar todos os dados deste app neste aparelho?')) {
-        try { localStorage.removeItem(KEY); } catch(e){}
-        S = {}; render();
+        try { localStorage.removeItem(KEY); localStorage.removeItem(UIKEY); } catch(e){}
+        S = {}; UI = {}; idbPut({}); draw();
       }
     };
   }
   function openCfg(){ var c=document.getElementById('cfg'); if (c) c.open = true; }
 
   function setupHTML(){
-    var t = ymd(todayDate());
-    return '<h1>Todo Dia</h1><section class="card">' +
-      '<strong>Vamos configurar</strong>' +
+    var t = UI.draftStart || ymd(todayDate());
+    return HEADER + '<section class="card">' +
+      '<h2>Vamos configurar</h2>' +
       '<p class="note">Esquema: 21 dias de pílula e 7 de pausa. Seus dados ficam só neste aparelho.</p>' +
       '<label for="f-start">Em que dia você tomou (ou vai tomar) a 1ª pílula da cartela atual?</label>' +
       '<input type="date" id="f-start" value="'+t+'">' +
       '<label for="f-time">Que horas você toma?</label>' +
-      '<input type="time" id="f-time" value="21:00">' +
+      '<input type="time" id="f-time" value="'+esc(UI.draftTime || '21:00')+'">' +
       '<div class="stack"><button class="btn" id="f-go">Começar</button></div></section>';
   }
   function bindSetup(){
+    var fs = document.getElementById('f-start'), ft = document.getElementById('f-time');
+    fs.onchange = function(){ UI.draftStart = fs.value; saveUI(); };
+    ft.onchange = function(){ UI.draftTime = ft.value; saveUI(); };
     document.getElementById('f-go').onclick = function(){
       var s = document.getElementById('f-start').value, t = document.getElementById('f-time').value;
       if (!s || !t){ alert('Preencha a data e o horário.'); return; }
-      S = {start:s, time:t, warn:5, log:{}}; save(); render();
+      S = {start:s, time:t, warn:5, log:{}}; delete UI.draftStart; delete UI.draftTime;
+      saveUI(); save(); render();
     };
   }
 
@@ -334,10 +441,12 @@ details[open] summary::after{content:"－"}
   }
 
   function downloadICS(){
-    var blob = new Blob([buildICS()], {type:'text/calendar;charset=utf-8'});
+    download(new Blob([buildICS()], {type:'text/calendar;charset=utf-8'}), 'lembretes-pilula.ics');
+  }
+  function download(blob, name){
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url; a.download = 'lembretes-pilula.ics';
+    a.href = url; a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
   }
@@ -345,14 +454,46 @@ details[open] summary::after{content:"－"}
   // expõe para testes locais, sem efeito no uso normal
   window.__pilula = {cycleInfo:cycleInfo, buildICS:buildICS, setState:function(x){S=x;}};
 
-  render();
+  // Primeira abertura: se o localStorage foi apagado, tenta recuperar a cópia do IndexedDB.
+  function start(){
+    draw(); restoreUI();
+    if (UI.scroll) setTimeout(function(){ window.scrollTo(0, UI.scroll); }, 0);
+  }
+  if (S.start) { start(); idbPut(S); }
+  else idbGet(function(x){
+    if (x && x.start) { S = x; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+    start();
+  });
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
+
+  // Ao voltar para o app (mesmo dias depois), atualiza para a data de hoje mantendo onde parou.
+  function resume(){
+    var a = document.activeElement;
+    if (a && a.tagName === 'INPUT') return;
+    var y = window.scrollY;
+    S = load().start ? load() : S;
+    render();
+    window.scrollTo(0, y);
+  }
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible') resume();
+    else { captureUI(); saveUI(); }
+  });
+  window.addEventListener('pageshow', function(e){ if (e.persisted) resume(); });
+  window.addEventListener('pagehide', function(){ captureUI(); saveUI(); });
+  var scrollT;
+  window.addEventListener('scroll', function(){
+    clearTimeout(scrollT);
+    scrollT = setTimeout(function(){ UI.scroll = window.scrollY; saveUI(); }, 300);
+  }, {passive:true});
+
   // atualiza o aviso de "já passou do horário" com o app aberto
   setInterval(function(){
     var a = document.activeElement;
     if (a && (a.tagName==='INPUT')) return;
-    var c = document.getElementById('cfg');
-    if (c && c.open) return;
+    var y = window.scrollY;
     render();
+    window.scrollTo(0, y);
   }, 60000);
 
   if ('serviceWorker' in navigator) {
