@@ -18,14 +18,14 @@
   --bg:#fff7f9; --card:#ffffff; --ink:#2b1d22; --muted:#7a6a70;
   --rose:#d6336c; --rose-soft:#fde3ec; --rose-ink:#9c1f4d;
   --pause:#ece8ea; --pause-ink:#6b5f64; --ok:#2f9e6b; --warn:#e8590c;
-  --line:#f0dde4; --field:#fff7f9; --shadow:0 1px 2px rgba(156,31,77,.06),0 6px 20px rgba(156,31,77,.06);
+  --line:#f0dde4; --field:#fff7f9; --bar:#d6336c; --grid:#f0e6ea; --shadow:0 1px 2px rgba(156,31,77,.06),0 6px 20px rgba(156,31,77,.06);
 }
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#1b1215; --card:#261a1f; --ink:#f6eaee; --muted:#b9a5ad;
     --rose:#f06595; --rose-soft:#3d1f2b; --rose-ink:#ffc2d6;
     --pause:#332a2e; --pause-ink:#c9b9c0; --ok:#51cf9b; --warn:#ff922b;
-    --line:#3a2a31; --field:#1f1519; --shadow:none;
+    --line:#3a2a31; --field:#1f1519; --bar:#e64980; --grid:#3a2a31; --shadow:none;
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -88,6 +88,29 @@ details[open] summary::after{content:"－"}
 .danger{color:#c92a2a;border-color:#f3c9c9}
 @media (prefers-color-scheme: dark){.danger{color:#ff8787;border-color:#5c2a2a}}
 .file{display:none}
+.top .back{margin-left:auto}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow);min-width:0}
+.tile .k{font-size:.8rem;color:var(--muted);line-height:1.25}
+.tile .v{font-size:1.6rem;font-weight:700;line-height:1.15;margin-top:4px;font-variant-numeric:tabular-nums}
+.tile .s{font-size:.8rem;color:var(--muted);margin-top:2px}
+.hero-num{font-size:3rem;font-weight:700;line-height:1;margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.meter{height:10px;border-radius:6px;background:var(--rose-soft);overflow:hidden;margin-top:12px}
+.meter i{display:block;height:100%;background:var(--bar);border-radius:6px}
+.chart{display:block;width:100%;height:auto;margin-top:12px;overflow:visible}
+.chart text{fill:var(--muted);font-size:11px;font-family:inherit}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .col{fill:var(--bar)}
+.chart .col.cur{fill:var(--rose-soft);stroke:var(--bar);stroke-width:1.5}
+.chart .col.sel{opacity:1}
+.chart.has-sel .col:not(.sel){opacity:.45}
+.readout{min-height:1.4em;font-size:.9rem;margin-top:8px;color:var(--ink);font-variant-numeric:tabular-nums}
+table.t{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:10px;font-variant-numeric:tabular-nums}
+table.t th,table.t td{text-align:left;padding:8px 4px;border-bottom:1px solid var(--line)}
+table.t th{color:var(--muted);font-weight:600}
+table.t td:last-child,table.t th:last-child{text-align:right}
+.open-stats{display:flex;align-items:center;justify-content:space-between;gap:12px;text-decoration:none;color:inherit;cursor:pointer}
+.open-stats .arrow{color:var(--muted);font-size:1.3rem}
 @media (max-width:360px){
   .card{padding:16px 14px}
   .grid{gap:4px}
@@ -202,6 +225,8 @@ details[open] summary::after{content:"－"}
     if (S.warn == null) S.warn = 5;
     S.log = S.log || {};
 
+    if (UI.view === 'stats') { app.innerHTML = statsHTML(); bindStats(); return; }
+
     var today = todayDate();
     var info = cycleInfo(today);
     var html = HEADER;
@@ -254,6 +279,9 @@ details[open] summary::after{content:"－"}
     }
 
     html += gridHTML(info, today);
+    html += '<section class="card open-stats" id="go-stats" role="button" tabindex="0">' +
+      '<div><strong>Minha evolução</strong><p class="note" style="margin:2px 0 0">Gráficos, cartelas e pílulas desde o início.</p></div>' +
+      '<span class="arrow">›</span></section>';
     html += '<details class="card" id="forgot"><summary>Esqueci de tomar</summary>' +
       '<p class="note">O que fazer depende do seu remédio e de quantas horas ou pílulas passaram. ' +
       'Confira a bula ou pergunte ao seu ginecologista ou farmacêutico. ' +
@@ -267,6 +295,13 @@ details[open] summary::after{content:"－"}
     if (u) u.onclick = function(){ delete S.log[key]; save(); render(); };
     bindGrid(today);
     bindSettings();
+    document.getElementById('go-stats').onclick = function(){ showView('stats'); };
+  }
+
+  function showView(v){
+    captureUI();
+    UI.view = v; UI.scroll = 0; saveUI();
+    draw(); restoreUI(); window.scrollTo(0,0);
   }
 
   function gridHTML(info, today){
@@ -317,6 +352,8 @@ details[open] summary::after{content:"－"}
       '<input type="date" id="s-start" value="'+esc(S.start)+'">' +
       '<label for="s-time">Horário da pílula</label>' +
       '<input type="time" id="s-time" value="'+esc(S.time||'21:00')+'">' +
+      '<label for="s-since">Comecei a usar este remédio em (opcional)</label>' +
+      '<input type="date" id="s-since" value="'+esc(S.since||'')+'">' +
       '<label for="s-warn">Avisar quando faltarem quantos dias para acabar</label>' +
       '<input type="number" id="s-warn" min="1" max="10" value="'+esc(S.warn==null?5:S.warn)+'">' +
       '<div class="stack">' +
@@ -336,6 +373,8 @@ details[open] summary::after{content:"－"}
     if (!st) return;
     st.onchange = function(){ if (st.value){ S.start = st.value; save(); render(); openCfg(); } };
     tm.onchange = function(){ if (tm.value){ S.time = tm.value; save(); render(); openCfg(); } };
+    var sc = document.getElementById('s-since');
+    sc.onchange = function(){ S.since = sc.value || ''; save(); render(); };
     wn.onchange = function(){
       var v = parseInt(wn.value,10);
       if (v>=1 && v<=10){ S.warn = v; save(); render(); openCfg(); }
@@ -388,6 +427,173 @@ details[open] summary::after{content:"－"}
       S = {start:s, time:t, warn:5, log:{}}; delete UI.draftStart; delete UI.draftTime;
       saveUI(); save(); render();
     };
+  }
+
+  // ---------- Minha evolução ----------
+  function stats(){
+    var today = todayDate();
+    var start = parse(S.start);
+    var keys = Object.keys(S.log||{}).sort();
+    // início do acompanhamento no app: a 1ª cartela configurada ou o 1º registro, o que vier antes
+    var track = start;
+    if (keys.length && diffDays(parse(keys[0]), track) > 0) track = parse(keys[0]);
+    var since = S.since ? parse(S.since) : track;
+    if (diffDays(since, track) < 0) since = track;
+
+    function cycStart(d){
+      var n = diffDays(start, d);
+      return addDays(d, -(((n % CYCLE) + CYCLE) % CYCLE));
+    }
+    function isPillDay(d){ var n = diffDays(start, d); return (((n % CYCLE)+CYCLE)%CYCLE) < PILLS; }
+
+    // cartelas acompanhadas no app
+    var cycles = [], cs = cycStart(track);
+    var taken = 0, expected = 0, times = [];
+    while (diffDays(cs, today) >= 0) {
+      var c = {start:cs, taken:0, expected:0, done:diffDays(addDays(cs, PILLS-1), today) > 0};
+      for (var i=0;i<PILLS;i++){
+        var d = addDays(cs, i), k = ymd(d), dt = diffDays(d, today);
+        if (diffDays(track, d) < 0 || dt < 0) continue;
+        var t = S.log[k];
+        if (dt > 0 || t) { c.expected++; if (t) c.taken++; }
+        if (t && t.t && t.t !== '--:--') times.push(minutes(t.t));
+      }
+      if (c.done && c.taken === PILLS) c.full = true;
+      taken += c.taken; expected += c.expected;
+      cycles.push(c);
+      cs = addDays(cs, CYCLE);
+    }
+    // cartelas terminadas desde o início do uso (estimado pelo ciclo de 28 dias)
+    var all = 0, cs2 = cycStart(since);
+    while (diffDays(addDays(cs2, PILLS-1), today) > 0) { all++; cs2 = addDays(cs2, CYCLE); }
+
+    // sequência atual: dias de pílula seguidos com registro (pausa não interrompe)
+    var streak = 0, d0 = today;
+    if (!isPillDay(d0) || !S.log[ymd(d0)]) d0 = addDays(d0, -1);
+    for (var g=0; g<3650; g++){
+      var dd0 = addDays(d0, -g);
+      if (diffDays(track, dd0) < 0) break;
+      if (!isPillDay(dd0)) continue;
+      if (S.log[ymd(dd0)]) streak++; else break;
+    }
+    var best = 0, run = 0;
+    for (var dd1 = track; diffDays(dd1, today) >= 0; dd1 = addDays(dd1, 1)){
+      if (!isPillDay(dd1)) continue;
+      if (S.log[ymd(dd1)]) { run++; if (run > best) best = run; }
+      else if (diffDays(dd1, today) > 0) run = 0;
+    }
+
+    var onTime = 0, avg = null, target = minutes(S.time);
+    if (times.length){
+      var sum = 0;
+      for (var j=0;j<times.length;j++){
+        var diff = times[j] - target;
+        if (diff > 720) diff -= 1440; if (diff < -720) diff += 1440;
+        sum += diff;
+        if (Math.abs(diff) <= 60) onTime++;
+      }
+      avg = (target + Math.round(sum/times.length) + 1440) % 1440;
+    }
+    return {since:since, track:track, days:diffDays(since, today), taken:taken, expected:expected,
+            cycles:cycles, cartelas:all, streak:streak, best:best, times:times.length,
+            onTime:onTime, avg:avg, total:keys.length};
+  }
+
+  function hm(m){ return pad(Math.floor(m/60))+':'+pad(m%60); }
+  function pct(a,b){ return b ? Math.round(a*100/b) : 0; }
+  function fmtDate(d){ return d.toLocaleDateString('pt-BR',{day:'numeric',month:'short',year:'numeric'}); }
+  function plural(n, a, b){ return n+' '+(n===1?a:b); }
+
+  function tenure(days){
+    if (days < 31) return plural(days,'dia','dias');
+    var m = Math.floor(days/30.44);
+    if (m < 12) return plural(m,'mês','meses');
+    var y = Math.floor(m/12), r = m%12;
+    return plural(y,'ano','anos') + (r ? ' e '+plural(r,'mês','meses') : '');
+  }
+
+  function statsHTML(){
+    var st = stats();
+    var adh = pct(st.taken, st.expected);
+    var h = '<header class="top"><img src="icon-180.png" alt=""><h1>Minha evolução</h1>' +
+      '<button class="btn ghost small back" id="back">Voltar</button></header>';
+
+    h += '<section class="card hero"><div class="label">Usando desde '+esc(fmtDate(st.since))+'</div>' +
+      '<div class="hero-num">'+esc(tenure(st.days))+'</div>' +
+      '<p class="sub" style="margin:0">'+plural(st.cartelas,'cartela terminada','cartelas terminadas')+
+      (S.since ? ' desde que você começou' : ' desde que começou a usar o app')+'.</p></section>';
+
+    h += '<div class="tiles">' +
+      tile('Pílulas tomadas', st.total, 'registradas no app') +
+      tile('Sequência atual', st.streak, st.streak===1?'dia seguido':'dias seguidos') +
+      tile('Maior sequência', st.best, st.best===1?'dia':'dias') +
+      tile('Horário médio', st.avg==null?'—':hm(st.avg), 'combinado: '+esc(S.time)) +
+      '</div>';
+
+    h += '<section class="card"><strong>Regularidade</strong>' +
+      '<div class="hero-num" style="font-size:2.2rem">'+adh+'%</div>' +
+      '<p class="note" style="margin:0">'+st.taken+' de '+st.expected+' pílulas esperadas foram registradas' +
+      (st.times ? '; '+pct(st.onTime, st.times)+'% até 1 hora do horário combinado.' : '.')+'</p>' +
+      '<div class="meter" role="img" aria-label="'+adh+'% registradas"><i style="width:'+adh+'%"></i></div></section>';
+
+    h += chartHTML(st.cycles);
+    h += '<p class="note" style="margin:0 4px">Os números contam só o que foi marcado no app. ' +
+      'Para dizer desde quando você usa o remédio, preencha a data em Ajustes.</p>';
+    return h;
+  }
+
+  function tile(k, v, s){
+    return '<div class="tile"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div><div class="s">'+s+'</div></div>';
+  }
+
+  function chartHTML(cycles){
+    var list = cycles.slice(-8);
+    var W = 320, H = 150, top = 14, bottom = 22, left = 24, right = 4;
+    var ph = H - top - bottom, pw = W - left - right;
+    var slot = pw / Math.max(list.length, 1);
+    var bw = Math.min(24, slot * 0.6);
+    var svg = '<svg class="chart" id="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Pílulas registradas por cartela">';
+    [0, 7, 14, 21].forEach(function(v){
+      var y = top + ph - ph * v / PILLS;
+      svg += '<line x1="'+left+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="var(--grid)" stroke-width="1"/>' +
+             '<text x="'+(left-6)+'" y="'+(y+4)+'" text-anchor="end">'+v+'</text>';
+    });
+    var rows = '';
+    list.forEach(function(c, i){
+      var n = cycles.length - list.length + i + 1;
+      var x = left + slot*i + (slot-bw)/2, bh = ph * c.taken / PILLS, y = top + ph - bh, r = Math.min(4, bh);
+      var path = bh > 0 ? 'M'+x+','+(top+ph)+'V'+(y+r)+'Q'+x+','+y+' '+(x+r)+','+y+'H'+(x+bw-r)+'Q'+(x+bw)+','+y+' '+(x+bw)+','+(y+r)+'V'+(top+ph)+'Z' : '';
+      var cur = !c.done;
+      var label = 'Cartela '+n+' ('+fmtShort(c.start)+'): '+c.taken+' de '+PILLS+(cur?' até agora':'');
+      if (path) svg += '<path class="col'+(cur?' cur':'')+'" data-i="'+i+'" d="'+path+'"/>';
+      svg += '<text x="'+(left+slot*i+slot/2)+'" y="'+(H-6)+'" text-anchor="middle">'+n+'</text>';
+      svg += '<rect class="hit" data-i="'+i+'" data-label="'+esc(label)+'" x="'+(left+slot*i)+'" y="0" width="'+slot+'" height="'+H+'"><title>'+esc(label)+'</title></rect>';
+      rows = '<tr><td>'+n+'</td><td>'+fmtShort(c.start)+' a '+fmtShort(addDays(c.start, PILLS-1))+'</td><td>'+c.taken+' de '+PILLS+(cur?' (atual)':'')+'</td></tr>' + rows;
+    });
+    svg += '</svg>';
+    return '<section class="card"><strong>Pílulas por cartela</strong>' +
+      '<p class="note" style="margin:2px 0 0">Toque numa barra para ver os detalhes. A barra clara é a cartela atual.</p>' +
+      svg + '<div class="readout" id="readout"></div>' +
+      '<details id="tbl"><summary style="font-weight:600;font-size:.92rem">Ver em tabela</summary>' +
+      '<table class="t"><thead><tr><th>Cartela</th><th>Período</th><th>Tomadas</th></tr></thead><tbody>'+rows+'</tbody></table></details></section>';
+  }
+
+  function bindStats(){
+    document.getElementById('back').onclick = function(){ showView('home'); };
+    var chart = document.getElementById('chart'), out = document.getElementById('readout');
+    if (!chart) return;
+    var hits = chart.querySelectorAll('.hit');
+    function pick(i, label){
+      var cols = chart.querySelectorAll('.col');
+      for (var j=0;j<cols.length;j++) cols[j].classList.toggle('sel', cols[j].getAttribute('data-i') === i);
+      chart.classList.add('has-sel');
+      out.textContent = label;
+    }
+    for (var k=0;k<hits.length;k++){
+      hits[k].addEventListener('click', function(){ pick(this.getAttribute('data-i'), this.getAttribute('data-label')); });
+      hits[k].addEventListener('mouseenter', function(){ pick(this.getAttribute('data-i'), this.getAttribute('data-label')); });
+    }
+    if (hits.length) { var last = hits[hits.length-1]; pick(last.getAttribute('data-i'), last.getAttribute('data-label')); }
   }
 
   // ---------- Calendário (.ics) ----------
