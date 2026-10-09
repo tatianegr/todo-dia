@@ -1,6 +1,6 @@
 // Service worker simples: guarda o app no aparelho para abrir offline.
 // Busca primeiro na internet (para pegar atualizações) e usa o cache se estiver sem sinal.
-var V = 'todo-dia-v4';
+var V = 'todo-dia-v5';
 var FILES = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {

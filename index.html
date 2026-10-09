@@ -235,8 +235,9 @@ table.t td:last-child,table.t th:last-child{text-align:right}
       html += '<section class="card hero"><div class="label">Cartela ainda não começou</div>' +
         '<div class="big">Começa em '+info.daysTo+(info.daysTo===1?' dia':' dias')+'</div>' +
         '<p class="sub">Primeira pílula em '+esc(fmtLong(parse(S.start)))+', às '+esc(S.time)+'.</p></section>';
+      html += statsLinkHTML();
       html += settingsHTML();
-      app.innerHTML = html; bindSettings(); return;
+      app.innerHTML = html; bindSettings(); bindStatsLink(); return;
     }
 
     var key = ymd(today);
@@ -279,9 +280,7 @@ table.t td:last-child,table.t th:last-child{text-align:right}
     }
 
     html += gridHTML(info, today);
-    html += '<section class="card open-stats" id="go-stats" role="button" tabindex="0">' +
-      '<div><strong>Minha evolução</strong><p class="note" style="margin:2px 0 0">Gráficos, cartelas e pílulas desde o início.</p></div>' +
-      '<span class="arrow">›</span></section>';
+    html += statsLinkHTML();
     html += '<details class="card" id="forgot"><summary>Esqueci de tomar</summary>' +
       '<p class="note">O que fazer depende do seu remédio e de quantas horas ou pílulas passaram. ' +
       'Confira a bula ou pergunte ao seu ginecologista ou farmacêutico. ' +
@@ -295,6 +294,15 @@ table.t td:last-child,table.t th:last-child{text-align:right}
     if (u) u.onclick = function(){ delete S.log[key]; save(); render(); };
     bindGrid(today);
     bindSettings();
+    bindStatsLink();
+  }
+
+  function statsLinkHTML(){
+    return '<section class="card open-stats" id="go-stats" role="button" tabindex="0">' +
+      '<div><strong>Minha evolução</strong><p class="note" style="margin:2px 0 0">Gráficos, cartelas e pílulas desde o início.</p></div>' +
+      '<span class="arrow">›</span></section>';
+  }
+  function bindStatsLink(){
     document.getElementById('go-stats').onclick = function(){ showView('stats'); };
   }
 
@@ -517,6 +525,14 @@ table.t td:last-child,table.t th:last-child{text-align:right}
     var adh = pct(st.taken, st.expected);
     var h = '<header class="top"><img src="icon-180.png" alt=""><h1>Minha evolução</h1>' +
       '<button class="btn ghost small back" id="back">Voltar</button></header>';
+
+    if (st.days < 0) {
+      var wait = -st.days;
+      return h + '<section class="card hero"><div class="label">Ainda sem dados</div>' +
+        '<div class="big">Começa em '+plural(wait,'dia','dias')+'</div>' +
+        '<p class="sub" style="margin:0">Sua evolução aparece aqui a partir da 1ª pílula, em '+esc(fmtLong(st.since))+'. ' +
+        'Se você já usava o remédio antes, informe a data em Ajustes, na tela inicial.</p></section>';
+    }
 
     h += '<section class="card hero"><div class="label">Usando desde '+esc(fmtDate(st.since))+'</div>' +
       '<div class="hero-num">'+esc(tenure(st.days))+'</div>' +
