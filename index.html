@@ -88,6 +88,10 @@ details[open] summary::after{content:"－"}
 .danger{color:#c92a2a;border-color:#f3c9c9}
 @media (prefers-color-scheme: dark){.danger{color:#ff8787;border-color:#5c2a2a}}
 .file{display:none}
+.steps{margin:4px 0 0;padding-left:1.3em;display:grid;gap:6px}
+.steps b{font-weight:700}
+.alarm-box{background:var(--rose-soft);color:var(--ink);border-radius:14px;padding:14px 16px}
+.alarm-box[hidden]{display:none}
 .top .back{margin-left:auto}
 .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow);min-width:0}
@@ -276,7 +280,13 @@ table.t td:last-child,table.t th:last-child{text-align:right}
       html += '<p class="sub" style="margin:0">' +
         (daysToNext===1 ? 'Amanhã você começa a nova cartela ('+esc(fmtLong(info.nextStart))+').'
                         : 'Nova cartela começa em '+daysToNext+' dias, '+esc(fmtLong(info.nextStart))+'.') +
-        '</p></section>';
+        '</p>' +
+        (S.alarm ? '<p class="note">Se quiser, desligue o despertador da pílula durante a pausa. ' +
+          'Lembre de religar para '+esc(fmtLong(info.nextStart))+'.</p>' : '') +
+        '</section>';
+    }
+    if (info.isPill && info.day === 1 && S.alarm) {
+      html += '<div class="banner">Nova cartela hoje. Se desligou o despertador na pausa, religue agora.</div>';
     }
 
     html += gridHTML(info, today);
@@ -368,6 +378,8 @@ table.t td:last-child,table.t th:last-child{text-align:right}
       '<button class="btn" id="ics">Adicionar lembretes ao Calendário</button>' +
       '<p class="note" style="margin:0">Cria alarmes diários para as próximas 6 cartelas (a pílula e uma segunda checagem 30 min depois), ' +
       'avisos de fim de cartela e de início da próxima. Se mudar o horário ou a data, gere de novo.</p>' +
+      '<button class="btn" id="alarm">Criar despertador</button>' +
+      alarmHelpHTML() +
       '<button class="btn ghost" id="bk-out">Salvar cópia de segurança</button>' +
       '<button class="btn ghost" id="bk-in">Restaurar cópia de segurança</button>' +
       '<input type="file" id="bk-file" class="file" accept=".json,application/json">' +
@@ -388,6 +400,7 @@ table.t td:last-child,table.t th:last-child{text-align:right}
       if (v>=1 && v<=10){ S.warn = v; save(); render(); openCfg(); }
     };
     document.getElementById('ics').onclick = downloadICS;
+    document.getElementById('alarm').onclick = createAlarm;
     document.getElementById('bk-out').onclick = function(){
       download(new Blob([JSON.stringify(S)], {type:'application/json'}), 'todo-dia-backup.json');
     };
@@ -612,6 +625,45 @@ table.t td:last-child,table.t th:last-child{text-align:right}
     if (hits.length) { var last = hits[hits.length-1]; pick(last.getAttribute('data-i'), last.getAttribute('data-label')); }
   }
 
+  // ---------- Despertador ----------
+  // Um site não consegue tocar como despertador com o celular bloqueado.
+  // Então criamos (Android) ou ensinamos a criar (iPhone) um alarme no app de relógio do aparelho.
+  function isIOS(){
+    return /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+  function isAndroid(){ return /Android/i.test(navigator.userAgent); }
+
+  function alarmHelpHTML(){
+    var t = esc(S.time || '21:00');
+    return '<div class="alarm-box" id="alarm-help"'+(UI.alarmHelp?'':' hidden')+'>' +
+      '<strong>Crie o despertador no app Relógio</strong>' +
+      '<ol class="steps">' +
+      '<li>Abra o app <b>Relógio</b> e toque em <b>Alarmes</b>.</li>' +
+      '<li>Toque em <b>+</b> e escolha <b>'+t+'</b>.</li>' +
+      '<li>Em <b>Repetir</b>, marque todos os dias.</li>' +
+      '<li>Em <b>Nome</b>, escreva <b>Pílula</b>.</li>' +
+      '<li>Escolha um som e toque em <b>Salvar</b>.</li>' +
+      '</ol>' +
+      '<p class="note">Ele toca alto mesmo com o celular no silencioso ou bloqueado. ' +
+      'Na semana de pausa você pode desligá-lo; o app avisa quando desligar e quando religar.</p>' +
+      '</div>';
+  }
+
+  function createAlarm(){
+    var p = (S.time || '21:00').split(':');
+    S.alarm = true; save();
+    if (isAndroid()) {
+      location.href = 'intent:#Intent;action=android.intent.action.SET_ALARM;' +
+        'i.android.intent.extra.alarm.HOUR='+parseInt(p[0],10)+';' +
+        'i.android.intent.extra.alarm.MINUTES='+parseInt(p[1],10)+';' +
+        'S.android.intent.extra.alarm.MESSAGE='+encodeURIComponent('Pílula')+';end';
+    }
+    var box = document.getElementById('alarm-help');
+    UI.alarmHelp = true; saveUI();
+    if (box) { box.hidden = false; box.scrollIntoView({behavior:'smooth', block:'center'}); }
+  }
+
   // ---------- Calendário (.ics) ----------
   function dt(d, hm){
     var p = hm.split(':');
@@ -650,11 +702,11 @@ table.t td:last-child,table.t th:last-child{text-align:right}
         }
         if (day === PILLS+1){
           ev('pause-'+dd(d), 'DTSTART;VALUE=DATE:'+dd(d), 'Pausa começa hoje (sem pílula)',
-             [{text:'Sem pílula por 7 dias',trig:'PT9H'}]);
+             [{text:'Sem pílula por 7 dias. Pode desligar o despertador.',trig:'PT9H'}]);
         }
         if (day === 1 && c > 0){
           ev('new-'+dd(d), 'DTSTART;VALUE=DATE:'+dd(d), 'Começa a nova cartela hoje',
-             [{text:'Primeira pílula da nova cartela',trig:'PT9H'}]);
+             [{text:'Primeira pílula da nova cartela. Religue o despertador.',trig:'PT9H'}]);
         }
       }
     }
