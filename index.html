@@ -285,6 +285,7 @@ table.t td:last-child,table.t th:last-child{text-align:right}
           'Lembre de religar para '+esc(fmtLong(info.nextStart))+'.</p>' : '') +
         '</section>';
     }
+    html += icsBannerHTML(today);
     if (info.isPill && info.day === 1 && S.alarm) {
       html += '<div class="banner">Nova cartela hoje. Se desligou o despertador na pausa, religue agora.</div>';
     }
@@ -305,6 +306,24 @@ table.t td:last-child,table.t th:last-child{text-align:right}
     bindGrid(today);
     bindSettings();
     bindStatsLink();
+    var ia = document.getElementById('ics-again');
+    if (ia) ia.onclick = downloadICS;
+  }
+
+  // Aviso para gerar de novo os lembretes do Calendário (acabando ou desatualizados)
+  function icsBannerHTML(today){
+    if (!S.ics || !S.ics.until) return '';
+    var left = diffDays(today, parse(S.ics.until)), msg = '';
+    if (S.ics.time !== S.time || S.ics.start !== S.start)
+      msg = 'Você mudou o horário ou a data da cartela. Gere os lembretes do Calendário de novo para eles ficarem certos.';
+    else if (left < 0)
+      msg = 'Seus lembretes do Calendário acabaram em '+esc(fmtShort(parse(S.ics.until)))+'. Gere de novo para continuar recebendo.';
+    else if (left <= 14)
+      msg = 'Seus lembretes do Calendário acabam '+(left===0?'hoje':left===1?'amanhã':'em '+left+' dias')+
+            ' ('+esc(fmtShort(parse(S.ics.until)))+'). Gere de novo para continuar recebendo.';
+    if (!msg) return '';
+    return '<div class="banner warn" id="ics-banner">'+msg +
+      '<button class="btn small" id="ics-again" style="margin-top:10px">Gerar lembretes de novo</button></div>';
   }
 
   function statsLinkHTML(){
@@ -377,7 +396,8 @@ table.t td:last-child,table.t th:last-child{text-align:right}
       '<div class="stack">' +
       '<button class="btn" id="ics">Adicionar lembretes ao Calendário</button>' +
       '<p class="note" style="margin:0">Cria alarmes diários para as próximas 6 cartelas (a pílula e uma segunda checagem 30 min depois), ' +
-      'avisos de fim de cartela e de início da próxima. Se mudar o horário ou a data, gere de novo.</p>' +
+      'avisos de fim de cartela e de início da próxima. O app avisa quando for preciso gerar de novo.' +
+      (S.ics && S.ics.until ? ' Lembretes atuais vão até '+esc(fmtShort(parse(S.ics.until)))+'.' : '') + '</p>' +
       '<button class="btn" id="alarm">Criar despertador</button>' +
       alarmHelpHTML() +
       '<button class="btn ghost" id="bk-out">Salvar cópia de segurança</button>' +
@@ -714,7 +734,14 @@ table.t td:last-child,table.t th:last-child{text-align:right}
     return L.join('\r\n');
   }
 
+  function icsCoverage(){
+    var today = todayDate(), cs = parse(S.start), n = diffDays(cs, today);
+    if (n > 0) cs = addDays(today, -(((n % CYCLE)+CYCLE)%CYCLE));
+    return addDays(cs, 5*CYCLE + PILLS - 1);
+  }
   function downloadICS(){
+    S.ics = {until: ymd(icsCoverage()), time: S.time, start: S.start}; save();
+    var b = document.getElementById('ics-banner'); if (b) b.remove();
     download(new Blob([buildICS()], {type:'text/calendar;charset=utf-8'}), 'lembretes-pilula.ics');
   }
   function download(blob, name){
